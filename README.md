@@ -9,12 +9,14 @@ https://www.kaggle.com/competitions/otto-recommender-system
   - Candidate phase
   - Ranking phase
 
-# 1. Candidate phase
-
+# 0. Prepare matrix
 - Generate Co-Visitatio Matrix which is based on Kaggle Code
   - `./kaggle_notebook/generate_matrix.ipynb`
   - This code is copied from Kaggle notebook and it can be run on the Kaggle environment.
-- Generate candidates for each session by using Co-Visitation Matrix
+
+# 1. Candidate phase
+
+- Generate candidates for each session by user history and Co-Visitation Matrix
 Run `otto_feature_generation.ipynb`
 
 # 2. Ranking phase
@@ -24,13 +26,13 @@ Run `otto_feature_generation.ipynb`
 
 Run `generate_session_aid_features.ipynb`
 
-## Training
+## 2-1. Training
 - LightGBM is used 
   - nDCG@20 and recall is applied as offline metrics
  
 Run `otto_lgb_train.ipynb`
 
-## Prediction
+## 2-2. Prediction
  
 Run `otto_lgb_test.ipynb`
 
