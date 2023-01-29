@@ -70,6 +70,14 @@ def join_session_features(df, path):
     session_df['session_carts_uu_action_ratio'] = session_df['session_carts_uu_action_ratio'].astype('float32')
     session_df['session_orders_uu_action_ratio'] = session_df['session_orders_uu_action_ratio'].astype('float32')
 
+    week_name_list = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    for w in week_name_list:
+        session_df[f'session_{w}_action_ratio'] = session_df[f'session_{w}_action_ratio'].astype('float32')
+    hour_name_list = ['0_3oclock', '4_7oclock', '8_11oclock', '12_15oclock', '16_19oclock', '20_23oclock']
+    for h in hour_name_list:
+        session_df[f'session_{h}_action_ratio_1week'] = session_df[f'session_{h}_action_ratio_1week'].astype('float32')
+
+
     week_list = ['4weeks', '2weeks', '1week']
     for i in week_list:
         lis = [f'aid_clicks_count_{i}',
@@ -125,6 +133,13 @@ def join_aid_features(df, path):
         aid_df[f'aid_mean_session_order_count_{i}'] = aid_df[f'aid_mean_session_order_count_{i}'].astype('float32')
         aid_df[f'aid_mean_session_type_mean_{i}'] = aid_df[f'aid_mean_session_type_mean_{i}'].astype('float32')
 
+        week_name_list = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        for w in week_name_list:
+            aid_df[f'aid_{w}_action_ratio_{i}'] = aid_df[f'aid_{w}_action_ratio_{i}'].astype('float32')
+        hour_name_list = ['0_3oclock', '4_7oclock', '8_11oclock', '12_15oclock', '16_19oclock', '20_23oclock']
+        for h in hour_name_list:
+            aid_df[f'aid_{h}_action_ratio_{i}'] = aid_df[f'aid_{h}_action_ratio_{i}'].astype('float32')
+
     for j in ['clicks', 'carts', 'orders']:
         for k in [2, 4]:
             aid_df[f'aid_{j}_count_rate_1_{k}'] = aid_df[f'aid_{j}_count_rate_1_{k}'].astype('float32')
@@ -168,4 +183,56 @@ def join_interactive_features(df):
             df[f'i_ratio_{l3}_{i}'] = df[f'aid_mean_{l3}_{i}'] / (df[l3] + 0.000001)
             df[f'i_ratio_{l3}_{i}'] = df[f'i_ratio_{l3}_{i}'].astype('float32')
         df[f'i_diff_session_type_mean_{i}'] = df[f'aid_mean_session_type_mean_{i}'] - df['session_type_mean']
+
+        # Calculate cosine similarity, day of week
+        week_name_list = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        df['week_length_session'], df['week_length_aid'] = 0, 0
+
+        for w in week_name_list:
+            df['week_length_session'] += df[f'session_{w}_action_ratio'] ** 2
+            df['week_length_aid'] += df[f'aid_{w}_action_ratio_{i}'] ** 2
+
+        df['week_length_session'] = df[f'week_length_session'] ** 0.5
+        df['week_length_aid'] = df['week_length_aid'] ** 0.5
+
+
+        df[f'week_days_cos_sim_{i}'] = 0
+        for w in week_name_list:
+            df[f'week_days_cos_sim_{i}'] += df[f'session_{w}_action_ratio'] * df[f'aid_{w}_action_ratio_{i}']
+        df[f'week_days_cos_sim_{i}'] = df[f'week_days_cos_sim_{i}'] / df['week_length_session'] / df['week_length_aid']
+        df[f'week_days_cos_sim_{i}'] = df[f'week_days_cos_sim_{i}'].astype('float32')
+        df = df.drop(['week_length_session','week_length_aid'] , axis=1)
+
+        # Calculate cosine similarity, hour
+        hour_name_list = ['0_3oclock', '4_7oclock', '8_11oclock', '12_15oclock', '16_19oclock', '20_23oclock']
+
+        df['hour_length_session'], df['hour_length_aid'] = 0, 0
+
+        for h in hour_name_list:
+            df['hour_length_session'] += df[f'session_{h}_action_ratio_1week'] ** 2
+            df['hour_length_aid'] += df[f'aid_{h}_action_ratio_{i}'] ** 2
+
+        df['hour_length_session'] = df['hour_length_session'] ** 0.5
+        df['hour_length_aid'] = df['hour_length_aid'] ** 0.5
+
+
+        df[f'hour_days_cos_sim_{i}'] = 0
+        for h in hour_name_list:
+            df[f'hour_days_cos_sim_{i}'] += df[f'session_{h}_action_ratio_1week'] * df[f'aid_{h}_action_ratio_{i}']
+        df[f'hour_days_cos_sim_{i}'] = df[f'hour_days_cos_sim_{i}'] / df['hour_length_session'] / df['hour_length_aid']
+        df[f'hour_days_cos_sim_{i}'] = df[f'hour_days_cos_sim_{i}'].astype('float32')
+        df = df.drop(['hour_length_session','hour_length_aid'] , axis=1)
+
     return df
+
+
+
+
+
+
+
+
+
+
+
+
